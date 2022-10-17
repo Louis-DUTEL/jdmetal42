@@ -1,0 +1,43 @@
+name: Build and Deploy
+on:
+  push:
+    branches: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2.3.1
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Install Project Dependencies
+        run: yarn install
+      - name: Build Gatsby
+        run: yarn build
+      - name: Copy config files
+        run: |
+          date > generated.txt
+          cp CNAME public/
+          cp robots.txt public/
+      - name: Clone GH Pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: jdmetal42-ghpages
+      - name: Deploy to GH-Pages
+        run: |
+          cd $GITHUB_WORKSPACE
+          rm -rf $GITHUB_WORKSPACE/jdmetal42-ghpages/*
+          cp -r public/* $GITHUB_WORKSPACE/jdmetal42-ghpages/
+          cd $GITHUB_WORKSPACE/jdmetal42-ghpages/
+          ls -al
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A .
+          git commit -m "generated"
+          git push
